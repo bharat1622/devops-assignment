@@ -1,1 +1,1 @@
-# gcp-devops-assignment
+# devops-assignment
