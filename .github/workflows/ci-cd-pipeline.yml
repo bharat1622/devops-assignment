@@ -26,27 +26,3 @@ jobs:
 
     - name: Build application
       run: npm run build
-
-    - name: Create Azure Service Principal
-      id: create_sp
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-          SP_NAME="my-github-actions-sp"
-          SP_CREDENTIALS=$(az ad sp create-for-rbac --name $SP_NAME --role contributor --scopes /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }} --sdk-auth)
-          echo "AZURE_SP_CREDENTIALS=$SP_CREDENTIALS" >> $GITHUB_ENV
-
-    - name: Login with Azure Service Principal
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          echo "${{ env.AZURE_SP_CREDENTIALS }}" > myAzureAuth.json
-          az login --service-principal --username $(jq -r .clientId myAzureAuth.json) --password $(jq -r .clientSecret myAzureAuth.json) --tenant $(jq -r .tenantId myAzureAuth.json)
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: Deploy to Azure VM
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          az vm run-command invoke -g myResourceGroup -n myVM --command-id RunShellScript --scripts "cd /var/www/html && git pull https://github.com/bharat1622/devops-assignment.git && npm install && npm run start"
